@@ -1,0 +1,83 @@
+{
+  "name": "multi-org-comparator",
+  "displayName": "Multi-Org Compare",
+  "description": "Compare Salesforce metadata between two orgs using SFDX.",
+  "version": "0.0.1",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Shannu9119/multi-org-diff-check"
+  },
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:multiOrgComparator.start"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "multiOrgComparator.start",
+        "title": "Multi-Org Comparator: Start Comparison"
+      },
+      {
+        "command": "multiOrgComparator.openDiff",
+        "title": "Open Diff"
+      },
+      { "command": "multiOrgComparator.showResults", "title": "Show Comparison Results", "icon": "$(list-unordered)" },
+      { "command": "multiOrgComparator.refreshResults", "title": "Refresh Results", "icon": "$(refresh)" },
+      { "command": "multiOrgComparator.filterModified", "title": "Toggle Modified", "icon": "$(diff)" },
+      { "command": "multiOrgComparator.filterAdded", "title": "Toggle Added", "icon": "$(diff-added)" },
+      { "command": "multiOrgComparator.filterDeleted", "title": "Toggle Deleted", "icon": "$(diff-removed)" },
+      { "command": "multiOrgComparator.filterByExt", "title": "Filter by Extension", "icon": "$(filter)" },
+      { "command": "multiOrgComparator.filterByName", "title": "Filter by Name", "icon": "$(search)" },
+      { "command": "multiOrgComparator.clearFilters", "title": "Clear Filters", "icon": "$(clear-all)" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "multiOrgComparator",
+          "title": "Multi-Org Comparator",
+          "icon": "resources/comparator.svg"
+        }
+      ]
+    },
+    "views": {
+      "multiOrgComparator": [
+        {
+          "id": "multiOrgComparator.results",
+          "name": "Comparison Results"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        { "command": "multiOrgComparator.refreshResults", "when": "view == multiOrgComparator.results", "group": "navigation@1" },
+        { "command": "multiOrgComparator.filterByName", "when": "view == multiOrgComparator.results", "group": "navigation@2" },
+        { "command": "multiOrgComparator.filterByExt", "when": "view == multiOrgComparator.results", "group": "navigation@3" },
+        { "command": "multiOrgComparator.filterModified", "when": "view == multiOrgComparator.results", "group": "filter@1" },
+        { "command": "multiOrgComparator.filterAdded", "when": "view == multiOrgComparator.results", "group": "filter@2" },
+        { "command": "multiOrgComparator.filterDeleted", "when": "view == multiOrgComparator.results", "group": "filter@3" },
+        { "command": "multiOrgComparator.clearFilters", "when": "view == multiOrgComparator.results", "group": "filter@9" }
+      ]
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p .",
+    "test": "jest",
+    "package": "vsce package"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.17",
+    "@types/vscode": "^1.104.0",
+    "diff": "^5.0.0",
+    "fast-xml-parser": "^4.0.0",
+    "jest": "^29.0.0",
+    "ts-jest": "^29.4.4",
+    "typescript": "^5.0.0"
+  }
+}
