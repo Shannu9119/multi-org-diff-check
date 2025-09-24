@@ -9,13 +9,14 @@
 			"name": "Run Extension (multi-org-comparator)",
 			"type": "extensionHost",
 			"request": "launch",
+			"runtimeExecutable": "${execPath}",
 			"args": [
 				"--extensionDevelopmentPath=${workspaceFolder}/multi-org-comparator"
 			],
 			"outFiles": [
 				"${workspaceFolder}/multi-org-comparator/out/**/*.js"
 			],
-			"preLaunchTask": "compile-extension"
+			"preLaunchTask": "ext:watch"
 		}
 	]
 }

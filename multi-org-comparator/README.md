@@ -22,6 +22,15 @@ Compare Salesforce metadata between two orgs (e.g., SIT and UAT) using the VS Co
 4. Select one or more metadata types to compare.
 5. Wait for retrieval and comparison. View results in the tree view and open diffs.
 
+## Quick Start (Dev/Test)
+```powershell
+npm install
+npm run compile
+```
+- Press F5 (Run Extension) to open the Extension Development Host.
+- Run `Multi-Org Comparator: Start Comparison` from the Command Palette.
+- When complete, click "Open Results" on the notification or use the activity bar view.
+
 ## Manual Integration Test Checklist
 - Ensure two SFDX-authenticated org aliases exist (e.g., SIT_ALIAS, UAT_ALIAS).
 - Run F1 → Multi-Org Comparator: Start Comparison.
