@@ -11,6 +11,8 @@ import { upsertResultsProvider, registerTreeViewCommands } from '../treeView';
 export function registerStartComparison(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('multiOrgComparator.start', async () => {
+      let baseRetrieve: string | undefined;
+      let persist = false;
       try {
       // Step 1: Select two orgs
       const orgAliases = await getOrgAliases();
@@ -72,7 +74,7 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
         }
         if (dxRoot) break;
       }
-      if (!dxRoot) {
+  if (!dxRoot) {
         // Prompt user to pick a folder as a last resort
         const pick = await vscode.window.showOpenDialog({ canSelectFolders: true, openLabel: 'Select Salesforce DX project folder' });
         if (!pick || pick.length === 0) {
@@ -85,11 +87,14 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
           return;
         }
       }
-      // Create subfolders for each org inside DX project
-      const orgAFolder = path.join(dxRoot, 'retrieve-orgA');
-      const orgBFolder = path.join(dxRoot, 'retrieve-orgB');
-      fs.mkdirSync(orgAFolder, { recursive: true });
-      fs.mkdirSync(orgBFolder, { recursive: true });
+  // Read persistence preference and create unique temp subfolders per run
+  persist = vscode.workspace.getConfiguration('multiOrgComparator').get<boolean>('persistRetrieves', false);
+  const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+  baseRetrieve = path.join(dxRoot, '.multi-org-comparator', timestamp);
+  const orgAFolder = path.join(baseRetrieve, 'retrieve-orgA');
+  const orgBFolder = path.join(baseRetrieve, 'retrieve-orgB');
+  fs.mkdirSync(orgAFolder, { recursive: true });
+  fs.mkdirSync(orgBFolder, { recursive: true });
       const pkgXml = generatePackageXml(selectedTypes);
       await TempUtil.writeFile(path.join(orgAFolder, 'package.xml'), pkgXml);
       await TempUtil.writeFile(path.join(orgBFolder, 'package.xml'), pkgXml);
@@ -102,6 +107,8 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
         });
       } catch (e) {
         vscode.window.showErrorMessage('Metadata retrieve failed: ' + (e as Error).message);
+        // Cleanup partial retrieve
+        try { if (baseRetrieve && !persist) fs.rmSync(baseRetrieve, { recursive: true, force: true }); } catch {}
         return;
       }
   // Step 4: Canonicalize and compare. For demo, look for files under each retrieve folder
@@ -201,6 +208,12 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
         console.error('Error in startComparison command:', e);
         vscode.window.showErrorMessage('Error: ' + e.message + '\n' + (e.stack || 'no stack'));
         return;
+      } finally {
+        try {
+          if (baseRetrieve && !persist) {
+            fs.rmSync(baseRetrieve, { recursive: true, force: true });
+          }
+        } catch {}
       }
     })
   );

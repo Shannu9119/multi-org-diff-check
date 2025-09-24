@@ -18,6 +18,16 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Multi-Org Comparator",
+      "properties": {
+        "multiOrgComparator.persistRetrieves": {
+          "type": "boolean",
+          "default": false,
+          "description": "If enabled, keep each run's retrieved metadata in new timestamped folders instead of cleaning previous results."
+        }
+      }
+    },
     "commands": [
       {
         "command": "multiOrgComparator.start",

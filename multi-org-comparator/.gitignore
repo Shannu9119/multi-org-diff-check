@@ -17,3 +17,4 @@ yarn-error.log*
 # Salesforce retrieve outputs
 retrieve-orgA/
 retrieve-orgB/
+.multi-org-comparator/
