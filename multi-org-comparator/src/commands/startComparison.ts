@@ -85,9 +85,12 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
           return;
         }
       }
-      // Create subfolders for each org inside DX project
+      // Revert to fixed retrieve folders (original behavior)
       const orgAFolder = path.join(dxRoot, 'retrieve-orgA');
       const orgBFolder = path.join(dxRoot, 'retrieve-orgB');
+      // Clean them before reuse to avoid stale overlap
+      try { if (fs.existsSync(orgAFolder)) fs.rmSync(orgAFolder, { recursive: true, force: true }); } catch {}
+      try { if (fs.existsSync(orgBFolder)) fs.rmSync(orgBFolder, { recursive: true, force: true }); } catch {}
       fs.mkdirSync(orgAFolder, { recursive: true });
       fs.mkdirSync(orgBFolder, { recursive: true });
       const pkgXml = generatePackageXml(selectedTypes);
@@ -189,7 +192,7 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
       if (items.length === 0) {
         vscode.window.showInformationMessage('Comparison complete. No differences found.');
       } else {
-        const action = await vscode.window.showInformationMessage(`Comparison complete. ${items.length} file(s) differ.`, 'Open Results');
+  const action = await vscode.window.showInformationMessage(`Comparison complete. ${items.length} file(s) differ.`, 'Open Results');
         if (action === 'Open Results') {
           await vscode.commands.executeCommand('multiOrgComparator.showResults');
         }
