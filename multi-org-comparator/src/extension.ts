@@ -1,10 +1,12 @@
 import * as vscode from 'vscode';
 import { registerStartComparison } from './commands/startComparison';
 import { focusResultsView } from './treeView';
+import { registerAssistantView } from './assistantView';
 
 export function activate(context: vscode.ExtensionContext) {
   try {
     registerStartComparison(context);
+  registerAssistantView(context);
     context.subscriptions.push(
       vscode.commands.registerCommand('multiOrgComparator.showResults', async () => {
         await focusResultsView();

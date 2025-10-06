@@ -2,7 +2,9 @@
   "name": "multi-org-comparator",
   "displayName": "Multi-Org Compare",
   "description": "Compare Salesforce metadata between two orgs using SFDX.",
-  "version": "0.0.1",
+  "version": "0.0.7",
+  "publisher": "shannu",
+  "icon": "resources/icon.png",
   "repository": {
     "type": "git",
     "url": "https://github.com/Shannu9119/multi-org-diff-check"
@@ -14,7 +16,11 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:multiOrgComparator.start"
+    "onCommand:multiOrgComparator.start",
+    "onView:multiOrgComparator.results",
+    "onView:multiOrgComparator.assistant",
+    "onCommand:multiOrgComparator.assistant.focus",
+    "onCommand:multiOrgComparator.cleanRetrieval"
   ],
   "main": "./out/extension.js",
   "contributes": {
@@ -50,6 +56,11 @@
         {
           "id": "multiOrgComparator.results",
           "name": "Comparison Results"
+        },
+        {
+          "id": "multiOrgComparator.assistant",
+          "name": "Assistant",
+          "type": "webview"
         }
       ]
     },
@@ -69,14 +80,17 @@
     "compile": "tsc -p .",
     "watch": "tsc -p . -w",
     "test": "jest",
-    "package": "vsce package"
+    "vscode:prepublish": "npm run compile",
+    "package": "npm run compile && npx @vscode/vsce package"
+  },
+  "dependencies": {
+    "diff": "^5.0.0",
+    "fast-xml-parser": "^4.0.0"
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.17",
-    "@types/vscode": "^1.104.0",
-    "diff": "^5.0.0",
-    "fast-xml-parser": "^4.0.0",
+  "@types/vscode": "1.80.0",
     "jest": "^29.0.0",
     "ts-jest": "^29.4.4",
     "typescript": "^5.0.0"

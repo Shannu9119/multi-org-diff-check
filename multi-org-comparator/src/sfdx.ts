@@ -76,7 +76,13 @@ export function runSfdx(command: string, opts?: { cwd?: string }): Promise<any> 
   }
 
   if (!dir) {
-    return Promise.reject(new Error('sfdx-project.json not found. Checked paths:\n' + checkedPaths.join('\n')));
+    // Allow org-related commands to run without a DX project (e.g., 'sf org list')
+    const orgCmd = /^\s*sf\s+org\b/i.test(command);
+    if (orgCmd) {
+      dir = process.cwd();
+    } else {
+      return Promise.reject(new Error('sfdx-project.json not found. Checked paths:\n' + checkedPaths.join('\n')));
+    }
   }
 
   return new Promise((resolve, reject) => {
@@ -134,5 +140,15 @@ export function runSfdx(command: string, opts?: { cwd?: string }): Promise<any> 
 export async function getOrgAliases(): Promise<string[]> {
   const result = await runSfdx('sf org list --json');
   if (typeof result === 'string') return [];
-  return (result.result?.nonScratchOrgs || []).map((o: any) => o.alias).filter(Boolean);
+  const nonScratch = Array.isArray(result.result?.nonScratchOrgs) ? result.result.nonScratchOrgs : [];
+  const scratch = Array.isArray(result.result?.scratchOrgs) ? result.result.scratchOrgs : [];
+  const all = [...nonScratch, ...scratch];
+  const names = all
+    .map((o: any) => o.alias || o.username)
+    .filter((v: any) => typeof v === 'string' && v.length > 0);
+  // Deduplicate while preserving order
+  const seen = new Set<string>();
+  const dedup: string[] = [];
+  for (const n of names) { if (!seen.has(n)) { seen.add(n); dedup.push(n); } }
+  return dedup;
 }

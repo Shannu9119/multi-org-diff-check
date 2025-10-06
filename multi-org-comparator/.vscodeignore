@@ -1,0 +1,13 @@
+# Exclusions for VSIX
+src/
+**/*.map
+**/*.test.*
+**/__tests__/**
+.vscode/
+node_modules/**/test/**
+node_modules/**/docs/**
+node_modules/**/examples/**
+.gitignore
+jest.config.js
+tsconfig.json
+sf_*.txt

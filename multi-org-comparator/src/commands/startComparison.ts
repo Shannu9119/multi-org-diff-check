@@ -11,27 +11,135 @@ import { upsertResultsProvider, registerTreeViewCommands } from '../treeView';
 export function registerStartComparison(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand('multiOrgComparator.start', async () => {
+      await runStartComparison(context);
+    }),
+    vscode.commands.registerCommand('multiOrgComparator.startWithContext', async (contextData?: {
+      suggestedOrgs?: string[],
+      suggestedMetadata?: string[],
+      originalMessage?: string,
+      assistantCallback?: (result: { success: boolean, error?: string, missingOrgs?: string[], availableOrgs?: string[] }) => void
+    }) => {
+      await runStartComparison(context, contextData);
+    })
+  );
+}
+
+async function runStartComparison(context: vscode.ExtensionContext, contextData?: {
+  suggestedOrgs?: string[],
+  suggestedMetadata?: string[],
+  originalMessage?: string,
+  assistantCallback?: (result: { success: boolean, error?: string, missingOrgs?: string[], availableOrgs?: string[] }) => void
+}) {
       try {
-      // Step 1: Select two orgs
+      // Step 1: Select two orgs (with smart defaults from context)
       const orgAliases = await getOrgAliases();
       if (!orgAliases.length) {
-        vscode.window.showErrorMessage('No authenticated Salesforce orgs found.');
+        const errorMsg = 'No authenticated Salesforce orgs found.';
+        vscode.window.showErrorMessage(errorMsg);
+        
+        // If called from assistant with callback, send detailed feedback
+        if (contextData?.assistantCallback) {
+          contextData.assistantCallback({ success: false, error: errorMsg });
+        }
         return;
       }
-      const orgA = await vscode.window.showQuickPick(orgAliases, { placeHolder: 'Select Org A', ignoreFocusOut: true });
-      if (!orgA) return;
-      const orgB = await vscode.window.showQuickPick(orgAliases.filter(o => o !== orgA), { placeHolder: 'Select Org B', ignoreFocusOut: true });
-      if (!orgB) return;
+
+      let orgA: string | undefined;
+      let orgB: string | undefined;
+
+      // Try to auto-select orgs based on context
+      if (contextData?.suggestedOrgs && contextData.suggestedOrgs.length >= 2) {
+        const matchedOrgs: string[] = [];
+        const missingOrgs: string[] = [];
+        
+        for (const suggested of contextData.suggestedOrgs) {
+          const match = orgAliases.find(alias => 
+            alias.toLowerCase().includes(suggested.toLowerCase()) || 
+            suggested.toLowerCase().includes(alias.toLowerCase())
+          );
+          if (match) {
+            matchedOrgs.push(match);
+          } else {
+            missingOrgs.push(suggested);
+          }
+        }
+        
+        // If some orgs are missing, provide helpful feedback
+        if (missingOrgs.length > 0 && contextData?.assistantCallback) {
+          contextData.assistantCallback({ 
+            success: false, 
+            error: 'Some requested orgs not found',
+            missingOrgs: missingOrgs,
+            availableOrgs: orgAliases
+          });
+          return;
+        }
+        
+        if (matchedOrgs.length >= 2) {
+          orgA = matchedOrgs[0];
+          orgB = matchedOrgs[1];
+          vscode.window.showInformationMessage(`Auto-selected orgs: ${orgA} and ${orgB}`);
+        } else if (matchedOrgs.length === 1) {
+          orgA = matchedOrgs[0];
+          vscode.window.showInformationMessage(`Found org: ${orgA}, please select the second org manually.`);
+        }
+      }
+
+      // If not auto-selected, prompt for selection
+      if (!orgA) {
+        orgA = await vscode.window.showQuickPick(orgAliases, { placeHolder: 'Select Org A', ignoreFocusOut: true });
+        if (!orgA) return;
+      }
+      
+      if (!orgB) {
+        const remainingOrgs = orgAliases.filter(o => o !== orgA);
+        orgB = await vscode.window.showQuickPick(remainingOrgs, { placeHolder: 'Select Org B', ignoreFocusOut: true });
+        if (!orgB) return;
+      }
+
       if (orgA === orgB) {
         vscode.window.showErrorMessage('Please select two different orgs.');
         return;
       }
-      // Step 2: Select metadata types
+      // Step 2: Select metadata types (with smart defaults from context)
       const metadataTypes = [
-        'ApexClass', 'ApexTrigger', 'LightningComponentBundle', 'CustomObject',
-        'Profile', 'PermissionSet', 'Flow', 'CustomField', 'Layout'
+        // Core code & UI
+        'ApexClass','ApexTrigger','LightningComponentBundle','AuraDefinitionBundle','ApexPage','ApexComponent','StaticResource',
+        // Data / model
+        'CustomObject','CustomMetadata','CustomLabels','GlobalValueSet', 'Layout','FlexiPage','LightningPage','FieldSet','RecordType',
+        // Security / access
+        'PermissionSet','PermissionSetGroup','CustomPermission','NamedCredential','RemoteSiteSetting',
+        // Automation / logic
+        'Flow','FlowDefinition','ValidationRule','Workflow','AssignmentRules','EscalationRules','MatchingRules','DuplicateRule','QuickAction',
+        // Experience / UI layer
+        'ExperienceBundle','NavigationMenu','CustomSite','EmailTemplate','CustomApplication',
+        // Misc
+        'ContentAsset','Profile'
       ];
-      const selectedTypes = await vscode.window.showQuickPick(metadataTypes, { canPickMany: true, placeHolder: 'Select metadata types to compare', ignoreFocusOut: true });
+
+      let selectedTypes: string[] | undefined;
+
+      // Try to auto-select metadata types based on context
+      if (contextData?.suggestedMetadata && contextData.suggestedMetadata.length > 0) {
+        const matchedTypes = contextData.suggestedMetadata.filter(suggested => 
+          metadataTypes.includes(suggested)
+        );
+        
+        if (matchedTypes.length > 0) {
+          selectedTypes = matchedTypes;
+          vscode.window.showInformationMessage(`Auto-selected metadata types: ${matchedTypes.join(', ')}`);
+        }
+      }
+
+      // If not auto-selected, prompt for selection
+      if (!selectedTypes) {
+        selectedTypes = await vscode.window.showQuickPick(metadataTypes, { 
+          canPickMany: true, 
+          placeHolder: 'Select metadata types to compare', 
+          ignoreFocusOut: true 
+        });
+      }
+
       if (!selectedTypes || !selectedTypes.length) {
         vscode.window.showErrorMessage('Select at least one metadata type.');
         return;
@@ -205,6 +313,4 @@ export function registerStartComparison(context: vscode.ExtensionContext) {
         vscode.window.showErrorMessage('Error: ' + e.message + '\n' + (e.stack || 'no stack'));
         return;
       }
-    })
-  );
 }
