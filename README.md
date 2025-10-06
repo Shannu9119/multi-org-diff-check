@@ -1,71 +1,44 @@
-# multi-org-diff-check README
+# Multi-Org Diff Check
 
-This is the README for your extension "multi-org-diff-check". After writing up a brief description, we recommend including the following sections.
+A VS Code extension for comparing Salesforce metadata between two orgs with an interactive assistant that understands natural language commands.
 
 ## Features
 
-Describe specific features of your extension including screenshots of your extension in action. Image paths are relative to this README file.
-
-For example if there is an image subfolder under your extension project workspace:
-
-\!\[feature X\]\(images/feature-x.png\)
-
-> Tip: Many popular extensions utilize animations. This is an excellent way to show off your extension! We recommend short, focused animations that are easy to follow.
+- **Interactive Assistant**: Chat with the extension using natural language like "compare apex classes between dev and prod"
+- **Comprehensive Metadata Comparison**: Support for ApexClass, ApexTrigger, Flow, Lightning Components, and more
+- **Smart Org Detection**: Automatically detects authenticated Salesforce orgs
+- **Intuitive UI**: Tree view with filters, side-by-side diffs, and progress notifications
+- **Authentication Guidance**: Step-by-step help when orgs need to be authenticated
+- **Export Capabilities**: Generate deployment packages from comparison results
 
 ## Requirements
 
-If you have any requirements or dependencies, add a section describing those and how to install and configure them.
+- Salesforce CLI (sf) installed and accessible
+- VS Code 1.80.0 or higher
+- Authenticated Salesforce orgs
 
-## Extension Settings
+## Quick Start
 
-Include if your extension adds any VS Code settings through the `contributes.configuration` extension point.
+1. Install the extension from VSIX or marketplace
+2. Open the Command Palette (F1) and run "Multi-Org Comparator: Start Comparison"
+3. Or use the interactive Assistant view to chat: "compare UAT and Hotfix for apex classes"
 
-For example:
+## Latest Release - v0.0.7
 
-This extension contributes the following settings:
+- Enhanced natural language parsing for custom org names
+- Improved authentication guidance flow
+- Better error handling and user feedback
+- Fixed org validation logic in assistant
 
-* `myExtension.enable`: Enable/disable this extension.
-* `myExtension.thing`: Set to `blah` to do something.
+## Development
 
-## Known Issues
+```bash
+npm install
+npm run compile
+npm run test
+```
 
-Calling out known issues can help limit users opening duplicate issues against your extension.
+## Repository Structure
 
-## Release Notes
-
-Users appreciate release notes as you update your extension.
-
-### 1.0.0
-
-Initial release of ...
-
-### 1.0.1
-
-Fixed issue #.
-
-### 1.1.0
-
-Added features X, Y, and Z.
-
----
-
-## Following extension guidelines
-
-Ensure that you've read through the extensions guidelines and follow the best practices for creating your extension.
-
-* [Extension Guidelines](https://code.visualstudio.com/api/references/extension-guidelines)
-
-## Working with Markdown
-
-You can author your README using Visual Studio Code. Here are some useful editor keyboard shortcuts:
-
-* Split the editor (`Cmd+\` on macOS or `Ctrl+\` on Windows and Linux).
-* Toggle preview (`Shift+Cmd+V` on macOS or `Shift+Ctrl+V` on Windows and Linux).
-* Press `Ctrl+Space` (Windows, Linux, macOS) to see a list of Markdown snippets.
-
-## For more information
-
-* [Visual Studio Code's Markdown Support](http://code.visualstudio.com/docs/languages/markdown)
-* [Markdown Syntax Reference](https://help.github.com/articles/markdown-basics/)
-
-**Enjoy!**
+- `/multi-org-comparator/` - Main extension code
+- Contains VSIX packages for different versions
