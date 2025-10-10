@@ -2,7 +2,7 @@
   "name": "multi-org-comparator",
   "displayName": "Multi-Org Compare",
   "description": "Compare Salesforce metadata between two orgs using SFDX.",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "publisher": "shannu",
   "icon": "resources/icon.png",
   "repository": {
