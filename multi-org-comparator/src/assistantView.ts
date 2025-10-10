@@ -95,11 +95,15 @@ export class AssistantViewProvider implements vscode.WebviewViewProvider {
         // Parse the message for specific orgs and metadata types
         const parsedRequest = this.parseComparisonRequest(message);
         
-        if (parsedRequest.orgs.length > 0 || parsedRequest.metadataTypes.length > 0) {
+        if (parsedRequest.orgs.length > 0 || parsedRequest.metadataTypes.length > 0 || parsedRequest.retrievalHint) {
           // Show what we parsed but don't claim they exist yet
+          const details = [];
+          if (parsedRequest.orgs.length > 0) details.push(`• Orgs: ${parsedRequest.orgs.join(', ')}`);
+          if (parsedRequest.metadataTypes.length > 0) details.push(`• Metadata: ${parsedRequest.metadataTypes.join(', ')}`);
+          if (parsedRequest.retrievalHint) details.push(`• Strategy: ${parsedRequest.retrievalHint === 'recent' ? 'Recently updated only' : 'All metadata'}`);
+          
           this.sendAssistantReply(`I understand you want to compare:
-${parsedRequest.orgs.length > 0 ? `• Orgs: ${parsedRequest.orgs.join(', ')}` : ''}
-${parsedRequest.metadataTypes.length > 0 ? `• Metadata: ${parsedRequest.metadataTypes.join(', ')}` : ''}
+${details.join('\n')}
 
 Let me check if these orgs are authenticated and start the comparison...`);
         } else {
@@ -109,6 +113,7 @@ Let me check if these orgs are authenticated and start the comparison...`);
         await vscode.commands.executeCommand('multiOrgComparator.startWithContext', {
           suggestedOrgs: parsedRequest.orgs,
           suggestedMetadata: parsedRequest.metadataTypes,
+          retrievalHint: parsedRequest.retrievalHint,
           originalMessage: message,
           assistantCallback: (result: any) => this.handleComparisonResult(result)
         });
@@ -129,16 +134,22 @@ I help you compare Salesforce metadata between different orgs intelligently!
 
 🚀 Smart Comparisons:
 Just tell me what you want to compare naturally:
-• "Compare apex classes between Dev and Prod"
-• "Check flows in staging vs production"  
-• "Compare validation rules between SIT and UAT"
+• "Compare recent apex classes between Dev and Prod" (recent metadata)
+• "Check all flows in staging vs production" (all metadata)  
+• "Compare recently updated validation rules between SIT and UAT" (recent metadata)
+• "Compare complete custom objects between Dev and UAT" (all metadata)
 
 🎯 What I Do:
 ✅ Auto-detect orgs from your message
 ✅ Auto-select metadata types you mention  
+✅ Choose retrieval strategy (all vs recent metadata)
 ✅ Skip manual prompts when possible
 ✅ Guide you through authentication if needed
 ✅ Show organized diff results with line-by-line changes
+
+📋 Retrieval Strategies:
+• **All Metadata**: Comprehensive comparison of all components (slower but thorough)
+• **Recent Metadata**: Focus on recently modified components (faster, configurable timeframe)
 
 🔐 Authentication Help:
 If orgs aren't found, I'll guide you through:
@@ -218,8 +229,10 @@ I can help with:
 • ❓ Help: "How does this tool work"
 
 Quick Examples:
-• "Compare flows between staging and prod"
-• "Check validation rules in dev vs uat"
+• "Compare recent flows between staging and prod"
+• "Check all validation rules in dev vs uat"
+• "Compare recently updated apex classes"
+• "Get complete metadata diff between orgs"
 • "Help with authentication"
 
 What would you like to do? 🤔`);
@@ -286,10 +299,11 @@ Please check your org authentication and try again. You can run 'sf org list' in
     }
   }
 
-  private parseComparisonRequest(message: string): { orgs: string[], metadataTypes: string[] } {
+  private parseComparisonRequest(message: string): { orgs: string[], metadataTypes: string[], retrievalHint?: 'all' | 'recent' } {
     const lowerMsg = message.toLowerCase();
     const orgs: string[] = [];
     const metadataTypes: string[] = [];
+    let retrievalHint: 'all' | 'recent' | undefined;
 
     // First, try to extract specific org names from patterns like "between X and Y"
     const betweenMatch = message.match(/between\s+([a-zA-Z0-9_.-]+)\s+and\s+([a-zA-Z0-9_.-]+)/i);
@@ -348,10 +362,18 @@ Please check your org authentication and try again. You can run 'sf org list' in
       }
     }
 
+    // Detect retrieval strategy hints
+    if (lowerMsg.match(/\b(recent|recently|modified|updated|changed|latest|new)\b/)) {
+      retrievalHint = 'recent';
+    } else if (lowerMsg.match(/\b(all|complete|full|everything|entire)\b/)) {
+      retrievalHint = 'all';
+    }
+
     // Remove duplicates
     return {
       orgs: [...new Set(orgs)],
-      metadataTypes: [...new Set(metadataTypes)]
+      metadataTypes: [...new Set(metadataTypes)],
+      retrievalHint
     };
   }
 

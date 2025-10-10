@@ -3,12 +3,14 @@ import * as vscode from 'vscode';
 export type FileDiffItem = {
   type: 'file';
   label: string;
-  resourceLeft: vscode.Uri; // Org A
-  resourceRight: vscode.Uri; // Org B
+  resourceLeft: vscode.Uri; // First org (source)
+  resourceRight: vscode.Uri; // Second org (target)
   firstChangeLine?: number | null; // 1-based
   added?: number;
   removed?: number;
   status?: 'modified' | 'added' | 'deleted';
+  orgAliasLeft?: string; // First org alias
+  orgAliasRight?: string; // Second org alias
 };
 
 export class MultiOrgTreeProvider implements vscode.TreeDataProvider<vscode.TreeItem> {
@@ -81,7 +83,11 @@ export function registerTreeViewCommands(context: vscode.ExtensionContext) {
   commandsRegistered = true;
   context.subscriptions.push(
     vscode.commands.registerCommand('multiOrgComparator.openDiff', async (item: FileDiffItem) => {
-      await vscode.commands.executeCommand('vscode.diff', item.resourceLeft, item.resourceRight, item.label);
+      // Create a more descriptive diff title with org names
+      const diffTitle = item.orgAliasLeft && item.orgAliasRight 
+        ? `${item.label} (${item.orgAliasLeft} ↔ ${item.orgAliasRight})`
+        : item.label;
+      await vscode.commands.executeCommand('vscode.diff', item.resourceLeft, item.resourceRight, diffTitle);
       if (item.firstChangeLine && item.firstChangeLine > 0) {
         const editors = vscode.window.visibleTextEditors;
         const right = editors.find(e => e.document.uri.toString() === item.resourceRight.toString());
